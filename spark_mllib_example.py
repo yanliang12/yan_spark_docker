@@ -102,3 +102,49 @@ model = kmeans.fit(dataset)
 predictions = model.transform(dataset)
 
 ############
+
+from pyspark.ml.linalg import Vectors
+from pyspark.ml.feature import VectorAssembler
+from pyspark.ml.feature import StringIndexer
+
+
+######
+
+dataset = spark.createDataFrame(
+    [
+    	(35, 100, 150, "heart_disease 1"),
+    	(20, 80, 100, "health"),
+    	(60, 110, 190, "heart_disease 2"),
+    	(60, 110, 190, "heart_disease 2"),
+	],
+    ["age", "blood_presure", "weight", "result"])
+
+assembler = VectorAssembler(
+    inputCols=["age", "blood_presure", "weight"],
+    outputCol="features")
+
+features = assembler.transform(dataset)
+
+#######
+
+indexer = StringIndexer(
+	inputCol="result", 
+	outputCol="label")
+
+indexer_model = indexer.fit(features)
+training = indexer_model.transform(features)
+
+
+
+from pyspark.ml.classification import LogisticRegression
+
+lr = LogisticRegression(
+	maxIter=100, 
+	regParam=0.3,
+	elasticNetParam=0.8)
+
+lrModel = lr.fit(training)
+
+prediction = lrModel.transform(training)
+
+prediction.show()
